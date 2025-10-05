@@ -1,13 +1,16 @@
-# Re-NoteSoftware
+# re_notesoftware
 
-班級桌面日記軟件（采用material design 3）
+A new Flutter project.
 
-# 重新設計 | NoteSoftware
+## Getting Started
 
+This project is a starting point for a Flutter application.
 
+A few resources to get you started if this is your first Flutter project:
 
-大概是先前的便簽幾乎全部重新製作的結果。
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-文件操作依舊很爛（因爲懶得弄新的json規範，就直接用了之前的）
-
-請忽略版本號，這只是半成品。不過不太影響使用。
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

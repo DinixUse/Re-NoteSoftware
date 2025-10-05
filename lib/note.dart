@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:markdown_widget/markdown_widget.dart';
 import 'package:flutter_animated_dialog_updated/flutter_animated_dialog.dart';
-import 'package:expandable_menu/expandable_menu.dart';
+import 'package:flutter_expanded_tile/flutter_expanded_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:file_picker/file_picker.dart';
 
 class NotePage extends StatefulWidget {
   const NotePage({super.key});
@@ -68,6 +70,7 @@ class _NotePageState extends State<NotePage> {
         ],
       ),
     ),
+
     const PopupMenuItem(
       value: 'copy',
       child: Row(
@@ -242,6 +245,12 @@ class _NotePageState extends State<NotePage> {
         WidgetState.any: Icon(Icons.close),
       });
 
+  static const WidgetStateProperty<Icon> thumbIconTH =
+      WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
+        WidgetState.selected: Icon(Icons.video_collection),
+        WidgetState.any: Icon(Icons.video_collection_outlined),
+      });
+
   @override
   void initState() {
     super.initState();
@@ -288,12 +297,12 @@ class _NotePageState extends State<NotePage> {
                         ? Radius.circular(24)
                         : Radius.circular(8),
                   ),
-                  side: cardData[index]['state'] == "normal"
-                      ? BorderSide.none
-                      : BorderSide(
+                  side: cardData[index]['state'] == "highlight"
+                      ? BorderSide(
                           width: 4,
                           color: Theme.of(context).colorScheme.primary,
-                        ),
+                        )
+                      : BorderSide.none
                 ),
                 child: Padding(
                   padding: EdgeInsets.all(12.0),
@@ -302,19 +311,21 @@ class _NotePageState extends State<NotePage> {
                       cardData[index]['title']!,
                       style: TextStyle(fontSize: 18),
                     ),
-                    subtitle: MarkdownBlock(
-                      data: cardData[index]['content']!,
-                      config: MarkdownConfig(
-                        configs: [
-                          PConfig(
-                            textStyle: TextStyle(
-                              fontFamily: "微软雅黑",
-                              fontSize: 22,
+                    subtitle: cardData[index]["state"] == "image"
+                        ? Image.file(File(cardData[index]["content"]!))
+                        : MarkdownBlock(
+                            data: cardData[index]['content']!,
+                            config: MarkdownConfig(
+                              configs: [
+                                PConfig(
+                                  textStyle: TextStyle(
+                                    fontFamily: "微软雅黑",
+                                    fontSize: 22,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -510,239 +521,363 @@ class _NotePageState extends State<NotePage> {
               Positioned(
                 top: 8,
                 right: 8,
-                child: PopupMenuButton<String>(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                  ),
-                  onSelected: (String value) {
-                    switch (value) {
-                      case 'edit':
-                        TextEditingController _thisNoteTitleController =
-                            TextEditingController(
-                              text: cardData[index]['title']!,
-                            );
-                        TextEditingController _thisNoteContentController =
-                            TextEditingController(
-                              text: cardData[index]['content']!,
-                            );
-                        bool _thisNoteHighlighted =
-                            cardData[index]['state'] == 'normal' ? false : true;
+                child: Card(
+                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  shadowColor: Colors.transparent,
+                  shape: CircleBorder(),
+                  child: PopupMenuButton<String>(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(24.0)),
+                    ),
 
-                        showAnimatedDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (BuildContext context) {
-                            return StatefulBuilder(
-                              builder: (BuildContext context, StateSetter setState) {
-                                return AlertDialog(
-                                  title: Text(
-                                    '修改筆記',
-                                    style: TextStyle(fontFamily: "微软雅黑"),
-                                  ),
+                    //shadowColor: Colors.transparent,
+                    //color: Colors.transparent,
+                    onSelected: (String value) {
+                      switch (value) {
+                        case 'edit':
+                          TextEditingController _thisNoteTitleController =
+                              TextEditingController(
+                                text: cardData[index]['title']!,
+                              );
+                          TextEditingController _thisNoteContentController =
+                              TextEditingController(
+                                text: cardData[index]['content']!,
+                              );
+                          bool _thisNoteHighlighted =
+                              cardData[index]['state'] == 'normal'
+                              ? false
+                              : true;
 
-                                  actions: [
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-
-                                      children: [
-                                        TextField(
-                                          controller: _thisNoteTitleController,
-                                          maxLines: 1,
-                                          minLines: 1,
-                                          decoration: const InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            label: Text('標題'),
-                                          ),
-                                        ),
-                                        SizedBox(height: 8),
-                                        TextField(
-                                          controller:
-                                              _thisNoteContentController,
-                                          maxLines: 8,
-                                          minLines: 1,
-                                          decoration: const InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            label: Text('内容'),
-                                          ),
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text('    選項'),
-                                        SizedBox(height: 12,),
-                                        SwitchListTile(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(24)
-                                          ),
-                                          tileColor: Theme.of(context).colorScheme.surfaceContainer,
-                                          title: Text(
-                                            '高亮便簽？',
-                                            style: TextStyle(
-                                              fontFamily: "微软雅黑",
-                                              fontSize: 20,
-                                            ),
-                                          ),
-                                          subtitle: Text(
-                                            '變更高亮狀態',
-                                            style: TextStyle(
-                                              fontFamily: "微软雅黑",
-                                            ),
-                                          ),
-                                          value: _thisNoteHighlighted,
-                                          thumbIcon: thumbIcon,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _thisNoteHighlighted = value;
-                                            });
-                                          },
-                                        ),
-                                        SizedBox(height: 12),
-                                      ],
+                          showAnimatedDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (BuildContext context) {
+                              return StatefulBuilder(
+                                builder: (BuildContext context, StateSetter setState) {
+                                  return AlertDialog(
+                                    title: Text(
+                                      '修改筆記',
+                                      style: TextStyle(fontFamily: "微软雅黑"),
                                     ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        OutlinedButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('取消'),
+
+                                    actions: [
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+
+                                        children: [
+                                          TextField(
+                                            controller:
+                                                _thisNoteTitleController,
+                                            maxLines: 1,
+                                            minLines: 1,
+                                            decoration: const InputDecoration(
+                                              border: OutlineInputBorder(),
+                                              label: Text('標題'),
+                                            ),
+                                          ),
+                                          SizedBox(height: 8),
+                                          TextField(
+                                            controller:
+                                                _thisNoteContentController,
+                                            maxLines: 8,
+                                            minLines: 1,
+                                            decoration: const InputDecoration(
+                                              border: OutlineInputBorder(),
+                                              label: Text('内容'),
+                                            ),
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text('    選項'),
+                                          SizedBox(height: 12),
+
+                                          SwitchListTile(
+                                            contentPadding: EdgeInsets.only(
+                                              top: 8,
+                                              right: 16,
+                                              bottom: 8,
+                                              left: 24,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(48),
+                                            ),
+                                            tileColor: Theme.of(
+                                              context,
+                                            ).colorScheme.primaryContainer,
+                                            title: Text(
+                                              '高亮便簽',
+                                              style: TextStyle(
+                                                fontFamily: "微软雅黑",
+                                                fontSize: 20,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryContainer,
+                                              ),
+                                            ),
+
+                                            value: _thisNoteHighlighted,
+                                            thumbIcon: thumbIcon,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _thisNoteHighlighted = value;
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(height: 12),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          OutlinedButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('取消'),
+                                          ),
+
+                                          SizedBox(width: 6),
+
+                                          FilledButton(
+                                            onPressed: () async {
+                                              File _originFile = File(
+                                                r'C:\Users\Public\note_files\notelist.json',
+                                              );
+                                              String _originString =
+                                                  await _originFile
+                                                      .readAsString();
+                                              Map<String, dynamic> _originMap =
+                                                  jsonDecode(_originString);
+
+                                              _originMap['title${index + 1}'] =
+                                                  _thisNoteTitleController.text;
+                                              _originMap['content${index + 1}'] =
+                                                  _thisNoteContentController
+                                                      .text;
+                                              _originMap['state${index + 1}'] =
+                                                  _thisNoteHighlighted
+                                                  ? "highlight"
+                                                  : "normal";
+
+                                              _originFile.writeAsString(
+                                                jsonEncode(_originMap),
+                                                mode: FileMode.write,
+                                              );
+                                              _loadNotes();
+
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('確定'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            animationType:
+                                DialogTransitionType.slideFromTopFade,
+                            curve: Curves.fastEaseInToSlowEaseOut,
+                            duration: Duration(milliseconds: 500),
+                          );
+                          break;
+                        case 'copy':
+                          Clipboard.setData(
+                            ClipboardData(text: cardData[index]['content']!),
+                          );
+
+                          showAnimatedDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainer,
+                                title: Center(child: Text("Copy succeed.")),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+
+                                  children: [
+                                    Icon(Icons.copy, size: 128),
+                                    SizedBox(height: 16),
+                                    ListTile(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(24),
+                                          topRight: Radius.circular(24),
+                                          bottomLeft: Radius.circular(24),
+                                          bottomRight: Radius.circular(24),
                                         ),
+                                      ),
+                                      tileColor: Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest,
+                                      title: Center(child: Text("Got it")),
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            animationType:
+                                DialogTransitionType.slideFromTopFade,
+                            curve: Curves.fastEaseInToSlowEaseOut,
+                            duration: Duration(milliseconds: 500),
+                          );
+                          break;
+                        case 'delete':
+                          if (cardData[index]['state'] == "thv") {
+                            showAnimatedDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainer,
+                                  title: Text("This action is not allowed."),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
 
-                                        SizedBox(width: 6),
-
-                                        FilledButton(
-                                          onPressed: () async {
-                                            File _originFile = File(
-                                              r'C:\Users\Public\note_files\notelist.json',
-                                            );
-                                            String _originString =
-                                                await _originFile
-                                                    .readAsString();
-                                            Map<String, dynamic> _originMap =
-                                                jsonDecode(_originString);
-
-                                            _originMap['title${index + 1}'] =
-                                                _thisNoteTitleController.text;
-                                            _originMap['content${index + 1}'] =
-                                                _thisNoteContentController.text;
-                                            _originMap['state${index + 1}'] =
-                                                _thisNoteHighlighted
-                                                ? "highlight"
-                                                : "normal";
-
-                                            _originFile.writeAsString(
-                                              jsonEncode(_originMap),
-                                              mode: FileMode.write,
-                                            );
-                                            _loadNotes();
-
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('確定'),
+                                    children: [
+                                      Icon(Icons.block, size: 128),
+                                      SizedBox(height: 16),
+                                      ListTile(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(24),
+                                            topRight: Radius.circular(24),
+                                            bottomLeft: Radius.circular(4),
+                                            bottomRight: Radius.circular(4),
+                                          ),
                                         ),
-                                      ],
+                                        tileColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        title: Center(child: Text("Got it")),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      SizedBox(height: 4),
+
+                                      ListTile(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(4),
+                                            topRight: Radius.circular(4),
+                                            bottomLeft: Radius.circular(4),
+                                            bottomRight: Radius.circular(4),
+                                          ),
+                                        ),
+                                        tileColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        title: Center(
+                                          child: Text(
+                                            "Why I encountered this?",
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          //Navigator.of(context).pop();
+                                        },
+                                      ),
+
+                                      SizedBox(height: 4),
+                                      ListTile(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(4),
+                                            topRight: Radius.circular(4),
+                                            bottomLeft: Radius.circular(24),
+                                            bottomRight: Radius.circular(24),
+                                          ),
+                                        ),
+                                        tileColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        title: Center(
+                                          child: Text("Send feedback"),
+                                        ),
+                                        onTap: () {
+                                          //Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              animationType:
+                                  DialogTransitionType.slideFromTopFade,
+                              curve: Curves.fastEaseInToSlowEaseOut,
+                              duration: Duration(milliseconds: 500),
+                            );
+                          } else {
+                            showAnimatedDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.warning, size: 36),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '刪除這份筆記？',
+                                        style: TextStyle(fontFamily: "微软雅黑"),
+                                      ),
+                                    ],
+                                  ),
+                                  content: Text("該操作不可回退！"),
+                                  actions: [
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('取消'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () {
+                                        _deleteCardIndex(index);
+                                        /*setState(() {
+                                    cardData.clear();
+                                  });*/
+                                        //_loadNotes();
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text(
+                                        '確定',
+                                        style: TextStyle(fontFamily: "微软雅黑"),
+                                      ),
                                     ),
                                   ],
                                 );
                               },
+                              animationType: DialogTransitionType.fadeScale,
+                              curve: Curves.fastEaseInToSlowEaseOut,
+                              duration: Duration(milliseconds: 500),
                             );
-                          },
-                          animationType: DialogTransitionType.slideFromTopFade,
-                          curve: Curves.fastEaseInToSlowEaseOut,
-                          duration: Duration(milliseconds: 500),
-                        );
-                        break;
-                      case 'copy':
-                        Clipboard.setData(
-                          ClipboardData(text: cardData[index]['content']!),
-                        );
-
-                        showAnimatedDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.check, size: 36),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    '複製成功！',
-                                    style: TextStyle(fontFamily: "微软雅黑"),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text(
-                                    '確定',
-                                    style: TextStyle(fontFamily: "微软雅黑"),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                          animationType: DialogTransitionType.fadeScale,
-                          curve: Curves.fastEaseInToSlowEaseOut,
-                          duration: Duration(milliseconds: 500),
-                        );
-                        break;
-                      case 'delete':
-                        showAnimatedDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.warning, size: 36),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    '刪除這份筆記？',
-                                    style: TextStyle(fontFamily: "微软雅黑"),
-                                  ),
-                                ],
-                              ),
-                              content: Text("該操作不可回退！"),
-                              actions: [
-                                OutlinedButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text('取消'),
-                                ),
-                                FilledButton(
-                                  onPressed: () {
-                                    _deleteCardIndex(index);
-                                    /*setState(() {
-                                    cardData.clear();
-                                  });*/
-                                    //_loadNotes();
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text(
-                                    '確定',
-                                    style: TextStyle(fontFamily: "微软雅黑"),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                          animationType: DialogTransitionType.fadeScale,
-                          curve: Curves.fastEaseInToSlowEaseOut,
-                          duration: Duration(milliseconds: 500),
-                        );
-                        break;
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => _CardMenuItems,
+                          }
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => _CardMenuItems,
+                  ),
                 ),
               ),
             ],
@@ -757,7 +892,62 @@ class _NotePageState extends State<NotePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              FloatingActionButton(onPressed: () {}, child: Icon(Icons.image)),
+              FloatingActionButton(
+                onPressed: () async {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Please select an image file."),
+                        actions: [
+                          Center(
+                            child: LinearProgressIndicator(
+                              borderRadius: BorderRadius.circular(24),
+                              minHeight: 48,
+                            ),
+                          ),
+                          
+                        ],
+                      );
+                    },
+                  );
+                  FilePickerResult? result = await FilePicker.platform
+                      .pickFiles(type: FileType.image);
+                  if (result != null) {
+                    File imgFile = File(result.files.single.path!);
+
+                    try {
+                      File _writeFile = File(
+                        'C:/Users/Public/note_files/notelist.json',
+                      );
+                      String _writeString = await _writeFile.readAsString();
+                      Map<String, dynamic> _originMap = jsonDecode(
+                        _writeString,
+                      );
+
+                      _originMap['itemCount'] = _originMap['itemCount'] + 1;
+
+                      _originMap['content${_originMap['itemCount']}'] =
+                          imgFile.path;
+                      _originMap['title${_originMap['itemCount']}'] = imgFile.path;
+                      _originMap['state${_originMap['itemCount']}'] = "image";
+
+                      await _writeFile.writeAsString(
+                        jsonEncode(_originMap),
+                        mode: FileMode.write,
+                      );
+                      _loadNotes();
+                    } catch (e) {
+                      print('Error: $e');
+                    }
+                    Navigator.of(context).pop();
+                  } else {
+                    // User canceled the picker
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Icon(Icons.image),
+              ),
 
               SizedBox(width: 14),
             ],
@@ -773,6 +963,7 @@ class _NotePageState extends State<NotePage> {
               final TextEditingController _contentController =
                   TextEditingController();
               bool _isHighLight = false;
+              bool _isTouhouVideo = false;
               showModalBottomSheet(
                 showDragHandle: true,
                 context: context,
@@ -789,7 +980,7 @@ class _NotePageState extends State<NotePage> {
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '新增筆記',
@@ -807,9 +998,10 @@ class _NotePageState extends State<NotePage> {
                                   fontFamily: "微软雅黑",
                                   fontSize: 20,
                                 ),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   border: InputBorder.none,
 
+                                  //fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                                   label: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
@@ -826,227 +1018,270 @@ class _NotePageState extends State<NotePage> {
 
                               Divider(),
 
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '工具：',
-                                    style: TextStyle(
-                                      fontFamily: "微软雅黑",
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  IconButton(
-                                    onPressed: () {
-                                      TextEditingController
-                                      _linkNameController =
-                                          TextEditingController();
-                                      TextEditingController _linkController =
-                                          TextEditingController();
-                                      showAnimatedDialog(
-                                        context: context,
-                                        barrierDismissible: true,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
-                                                Icon(
-                                                  Icons.add_a_photo,
-                                                  size: 36,
+                              Card(
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHigh,
+                                child: Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () {
+                                          TextEditingController
+                                          _linkNameController =
+                                              TextEditingController();
+                                          TextEditingController
+                                          _linkController =
+                                              TextEditingController();
+                                          showAnimatedDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.add_a_photo,
+                                                      size: 36,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      '插入網路圖片',
+                                                      style: TextStyle(
+                                                        fontFamily: "微软雅黑",
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  '插入網路圖片',
-                                                  style: TextStyle(
-                                                    fontFamily: "微软雅黑",
+                                                actions: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: TextField(
+                                                          controller:
+                                                              _linkNameController,
+                                                          maxLines: 1,
+                                                          minLines: 1,
+                                                          decoration:
+                                                              InputDecoration(
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                label: Text(
+                                                                  '圖片描述',
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(width: 6),
+
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: TextField(
+                                                          controller:
+                                                              _linkController,
+                                                          maxLines: 1,
+                                                          minLines: 1,
+                                                          decoration:
+                                                              InputDecoration(
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                label: Text(
+                                                                  '網路圖片url',
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ),
-                                              ],
+
+                                                  const SizedBox(height: 12),
+
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      OutlinedButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: Text('取消'),
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      FilledButton(
+                                                        onPressed: () {
+                                                          _contentController
+                                                                  .text =
+                                                              '!${_contentController.text}[${_linkNameController.text}](${_linkController.text})';
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: Text('確定'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                            animationType:
+                                                DialogTransitionType.fadeScale,
+                                            curve:
+                                                Curves.fastEaseInToSlowEaseOut,
+                                            duration: Duration(
+                                              milliseconds: 500,
                                             ),
-                                            actions: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: TextField(
-                                                      controller:
-                                                          _linkNameController,
-                                                      maxLines: 1,
-                                                      minLines: 1,
-                                                      decoration: InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        label: Text('圖片描述'),
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  const SizedBox(width: 6),
-
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: TextField(
-                                                      controller:
-                                                          _linkController,
-                                                      maxLines: 1,
-                                                      minLines: 1,
-                                                      decoration: InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        label: Text('網路圖片url'),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-
-                                              const SizedBox(height: 12),
-
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  OutlinedButton(
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                    child: Text('取消'),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  FilledButton(
-                                                    onPressed: () {
-                                                      _contentController.text =
-                                                          '!${_contentController.text}[${_linkNameController.text}](${_linkController.text})';
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                    child: Text('確定'),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
                                           );
                                         },
-                                        animationType:
-                                            DialogTransitionType.fadeScale,
-                                        curve: Curves.fastEaseInToSlowEaseOut,
-                                        duration: Duration(milliseconds: 500),
-                                      );
-                                    },
-                                    icon: Icon(Icons.photo),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      TextEditingController
-                                      _linkNameController =
-                                          TextEditingController();
-                                      TextEditingController _linkController =
-                                          TextEditingController();
-                                      showAnimatedDialog(
-                                        context: context,
-                                        barrierDismissible: true,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
-                                                Icon(Icons.add_link, size: 36),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  '插入鏈接',
-                                                  style: TextStyle(
-                                                    fontFamily: "微软雅黑",
-                                                  ),
+                                        icon: Icon(Icons.photo),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {
+                                          TextEditingController
+                                          _linkNameController =
+                                              TextEditingController();
+                                          TextEditingController
+                                          _linkController =
+                                              TextEditingController();
+                                          showAnimatedDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.add_link,
+                                                      size: 36,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      '插入鏈接',
+                                                      style: TextStyle(
+                                                        fontFamily: "微软雅黑",
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
+                                                actions: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: TextField(
+                                                          controller:
+                                                              _linkNameController,
+                                                          maxLines: 1,
+                                                          minLines: 1,
+                                                          decoration:
+                                                              InputDecoration(
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                label: Text(
+                                                                  '鏈接文字',
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(width: 6),
+
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: TextField(
+                                                          controller:
+                                                              _linkController,
+                                                          maxLines: 1,
+                                                          minLines: 1,
+                                                          decoration:
+                                                              InputDecoration(
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                label: Text(
+                                                                  '鏈接地址',
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  const SizedBox(height: 12),
+
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      OutlinedButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: Text('取消'),
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      FilledButton(
+                                                        onPressed: () {
+                                                          _contentController
+                                                                  .text =
+                                                              '${_contentController.text}[${_linkNameController.text}](${_linkController.text})';
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: Text('確定'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                            animationType:
+                                                DialogTransitionType.fadeScale,
+                                            curve:
+                                                Curves.fastEaseInToSlowEaseOut,
+                                            duration: Duration(
+                                              milliseconds: 500,
                                             ),
-                                            actions: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: TextField(
-                                                      controller:
-                                                          _linkNameController,
-                                                      maxLines: 1,
-                                                      minLines: 1,
-                                                      decoration: InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        label: Text('鏈接文字'),
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  const SizedBox(width: 6),
-
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: TextField(
-                                                      controller:
-                                                          _linkController,
-                                                      maxLines: 1,
-                                                      minLines: 1,
-                                                      decoration: InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        label: Text('鏈接地址'),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-
-                                              const SizedBox(height: 12),
-
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  OutlinedButton(
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                    child: Text('取消'),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  FilledButton(
-                                                    onPressed: () {
-                                                      _contentController.text =
-                                                          '${_contentController.text}[${_linkNameController.text}](${_linkController.text})';
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                    child: Text('確定'),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
                                           );
                                         },
-                                        animationType:
-                                            DialogTransitionType.fadeScale,
-                                        curve: Curves.fastEaseInToSlowEaseOut,
-                                        duration: Duration(milliseconds: 500),
-                                      );
-                                    },
-                                    icon: Icon(Icons.link),
+                                        icon: Icon(Icons.link),
+                                      ),
+                                      //Text("Is Touhou Video?", style: TextStyle(fontSize: 16),),
+                                      //VerticalDivider(),
+                                      Switch(
+                                        thumbIcon: thumbIconTH,
+                                        value: _isTouhouVideo,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _isTouhouVideo = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
 
                               TextField(
@@ -1064,29 +1299,38 @@ class _NotePageState extends State<NotePage> {
                               //Divider(),
                               Card(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(48),
                                 ),
                                 shadowColor: Colors.transparent,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.surfaceContainerHigh,
+                                ).colorScheme.primaryContainer,
                                 child: Padding(
-                                  padding: EdgeInsets.all(8),
+                                  padding: EdgeInsets.all(0),
                                   child: SwitchListTile(
+                                    contentPadding: EdgeInsets.only(
+                                      left: 8,
+                                      right: 16,
+                                      top: 8,
+                                      bottom: 8,
+                                    ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
+                                      borderRadius: BorderRadius.circular(48),
                                     ),
                                     title: Text(
-                                      '高亮這份便簽？',
+                                      '   高亮便簽',
                                       style: TextStyle(
                                         fontFamily: "微软雅黑",
                                         fontSize: 20,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
                                       ),
                                     ),
-                                    subtitle: Text(
-                                      '讓這份便簽變得更加顯眼✌',
+                                    /*subtitle: Text(
+                                      '     讓這份便簽變得更加顯眼✌',
                                       style: TextStyle(fontFamily: "微软雅黑"),
-                                    ),
+                                    ),*/
                                     thumbIcon: thumbIcon,
                                     value: _isHighLight,
                                     onChanged: (value) {
@@ -1108,10 +1352,18 @@ class _NotePageState extends State<NotePage> {
                                       _contentController.clear();
                                       Navigator.of(context).pop();
                                     },
-                                    child: Text('取消'),
+                                    child: Text(
+                                      '取消',
+                                      style: TextStyle(
+                                        fontFamily: "微软雅黑",
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
                                   ),
                                   SizedBox(width: 10),
-                                  FilledButton(
+                                  OutlinedButton(
                                     onPressed: () async {
                                       try {
                                         File _writeFile = File(
@@ -1133,6 +1385,10 @@ class _NotePageState extends State<NotePage> {
                                             _isHighLight
                                             ? "highlight"
                                             : "normal";
+                                        if (_isTouhouVideo) {
+                                          _originMap['state${_originMap['itemCount']}'] =
+                                              "thv";
+                                        }
 
                                         await _writeFile.writeAsString(
                                           jsonEncode(_originMap),
@@ -1146,7 +1402,15 @@ class _NotePageState extends State<NotePage> {
                                         print('Error: $e');
                                       }
                                     },
-                                    child: Text('完成'),
+                                    child: Text(
+                                      '完成',
+                                      style: TextStyle(
+                                        fontFamily: "微软雅黑",
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

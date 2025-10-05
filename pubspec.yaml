@@ -46,6 +46,9 @@ dependencies:
   flutter_expanded_tile: ^0.4.0
   split_button: ^0.1.0
   numberpicker: ^2.1.2
+  flex_color_picker: ^3.7.1
+  intl: ^0.18.1
+  file_picker: ^10.3.3
 
 dev_dependencies:
   flutter_test:
