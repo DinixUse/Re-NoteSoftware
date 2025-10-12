@@ -18,6 +18,8 @@ import 'score.dart';
 Map<String, dynamic> settingMap = {};
 Map<String, dynamic> scoreMap = {};
 
+bool isDarkMode = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Must add this line.
@@ -72,6 +74,8 @@ void main() async {
       windowManager.setPosition(Offset(appX.toDouble(), appY.toDouble()));
       windowManager.setAsFrameless();
     });
+
+    isDarkMode = settingMap["app-dark-theme"];
 
     runApp(
       MyApp(
@@ -135,10 +139,13 @@ class MyApp extends StatelessWidget {
       //theme: TofuTheme.light(seedColor: Color(appSeedColor)),
       //darkTheme: TofuTheme.dark(seedColor: Color(appSeedColor)),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(appSeedColor)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(appSeedColor),
+          brightness: isDarkMode ? Brightness.dark : Brightness.light,
+        ),
       ),
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: const MyHomePage(title: 'Re: Note'),
+      home: MyHomePage(title: 'Re: Note'),
     );
   }
 }
@@ -216,7 +223,6 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
 
                   FloatyTab(
-                    
                     unselectedColor: Theme.of(
                       context,
                     ).colorScheme.surfaceContainerHigh,
@@ -304,13 +310,19 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _floating = false;
   Color selectedColor = const Color(0xFF42A5F5);
 
+  static const WidgetStateProperty<Icon> thumbIcon =
+      WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
+        WidgetState.selected: Icon(Icons.check),
+        WidgetState.any: Icon(Icons.close),
+      });
+
   final Map<ColorSwatch<Object>, String> customColors = {
     ColorTools.createPrimarySwatch(const Color(0xFFE91E63)): "粉色",
     ColorTools.createPrimarySwatch(const Color(0xFF9C27B0)): "紫色",
     ColorTools.createPrimarySwatch(const Color(0xFF673AB7)): "深紫",
     ColorTools.createPrimarySwatch(const Color(0xFF2196F3)): "蓝色",
     ColorTools.createPrimarySwatch(const Color(0xFF00BCD4)): "青色",
-    ColorTools.createPrimarySwatch(const Color(0xFF009688)): "深绿",
+    ColorTools.createPrimarySwatch(const Color.fromARGB(255, 58, 160, 61)): "绿",
     ColorTools.createPrimarySwatch(const Color(0xFFFFEB3B)): "黄色",
     ColorTools.createPrimarySwatch(const Color(0xFFFF9800)): "橙色",
     ColorTools.createPrimarySwatch(const Color(0xFFFF5722)): "深橙",
@@ -318,27 +330,123 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
+    return Card(
+      margin: EdgeInsets.all(12),
+      shadowColor: Colors.black,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: Theme.of(context).colorScheme.surface,
+      child: Padding(
         padding: EdgeInsets.all(16),
         child: Scaffold(
           appBar: AppBar(
             leading: IconButton.filledTonal(
               onPressed: () {
-                showAboutDialog(
+                showAnimatedDialog(
+                  animationType: DialogTransitionType.slideFromTopFade,
+                  curve: Curves.fastEaseInToSlowEaseOut,
+                  duration: Duration(milliseconds: 500),
                   context: context,
-                  applicationIcon: ClipRRect(
-                    borderRadius: BorderRadius.circular(24.0),
-                    child: Image.asset(
-                      'assets/icon/ecnu.jpg',
-                      width: 128.0,
-                      height: 128.0,
-                    ),
-                  ),
-                  applicationVersion: '9.8.5',
-                  applicationName: 'Re: Note',
-                  applicationLegalese:
-                      '@2025 Dinix_NeverOSC, all rights reserved.',
+                  builder: (context) {
+                    return AboutDialog(
+                      applicationIcon: ClipRRect(
+                        borderRadius: BorderRadius.circular(24.0),
+                        child: Image.asset(
+                          'assets/icon/ecnu.jpg',
+                          width: 128.0,
+                          height: 128.0,
+                        ),
+                      ),
+                      applicationVersion: '9.8.5',
+                      applicationName: 'Re: Note',
+                      applicationLegalese:
+                          '@2025 Dinix_NeverOSC, all rights reserved.',
+                      children: [
+                        SizedBox(height: 24),
+                        ListTile(
+                          minTileHeight: 64,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24),
+                              bottomLeft: Radius.circular(4),
+                              bottomRight: Radius.circular(4),
+                            ),
+                          ),
+                          tileColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          title: Center(
+                            child: Text(
+                              "Visit website",
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                          onTap: () {},
+                        ),
+                        SizedBox(height: 4),
+
+                        ListTile(
+                          minTileHeight: 64,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                              bottomLeft: Radius.circular(4),
+                              bottomRight: Radius.circular(4),
+                            ),
+                          ),
+                          tileColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          title: Center(
+                            child: Text(
+                              "Dinix_NeverOSC on Bilibili",
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                          onTap: () {},
+                        ),
+
+                        SizedBox(height: 4),
+                        ListTile(
+                          minTileHeight: 64,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(24),
+                            ),
+                          ),
+                          tileColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          title: Center(
+                            child: Text(
+                              "Send feedback",
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                          onTap: () {},
+                        ),
+                        SizedBox(height: 24),
+                        Divider(thickness: 2, radius: BorderRadius.circular(4)),
+                      ],
+                    );
+                  },
                 );
               },
               icon: Icon(Icons.info_outline),
@@ -385,6 +493,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     bottomRight: Radius.circular(4),
                   ),
                 ),
+                margin: EdgeInsets.all(2),
                 child: ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
@@ -402,106 +511,101 @@ class _SettingsPageState extends State<SettingsPage> {
                       barrierDismissible: true,
                       builder: (BuildContext context) {
                         return StatefulBuilder(
-                          builder:
-                              (BuildContext context, StateSetter setState) {
-                                return AlertDialog(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surface,
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Center(
-                                        child: ColorPicker(
-                                          color: selectedColor,
-                                          onColorChanged: (Color color) {
-                                            setState(
-                                              () => selectedColor = color,
-                                            );
-                                          },
-                                          width: 40,
-                                          height: 40,
-                                          borderRadius: 4,
-                                          spacing: 5,
-                                          runSpacing: 5,
-                                          // 只启用自定义颜色选择器
-                                          pickersEnabled: const {
-                                            ColorPickerType.custom: true,
-                                            ColorPickerType.primary: false,
-                                            ColorPickerType.accent: false,
-                                            ColorPickerType.wheel: false,
-                                            ColorPickerType.bw: false,
-                                            ColorPickerType.both: false,
-                                          },
-                                          // 设置自定义颜色
-                                          customColorSwatchesAndNames:
-                                              customColors,
-                                          // 显示颜色名称
-                                          showColorName: false,
-                                          // 显示颜色代码
-                                          showColorCode: false,
-                                          // 标题和子标题
-                                          heading: Card(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.secondaryContainer,
-                                            shadowColor: Colors.transparent,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(24),
-                                            ),
-                                            child: Container(
-                                              width: 140,
-                                              height: 48,
-                                              child: Padding(
-                                                padding: EdgeInsets.all(8),
-                                                child: Center(
-                                                  child: Text(
-                                                    'Pick Colors',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
+                          builder: (BuildContext context, StateSetter setState) {
+                            return AlertDialog(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surface,
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Center(
+                                    child: ColorPicker(
+                                      color: selectedColor,
+                                      onColorChanged: (Color color) {
+                                        setState(() => selectedColor = color);
+                                      },
+                                      width: 40,
+                                      height: 40,
+                                      borderRadius: 4,
+                                      spacing: 5,
+                                      runSpacing: 5,
+                                      // 只启用自定义颜色选择器
+                                      pickersEnabled: const {
+                                        ColorPickerType.custom: true,
+                                        ColorPickerType.primary: false,
+                                        ColorPickerType.accent: false,
+                                        ColorPickerType.wheel: false,
+                                        ColorPickerType.bw: false,
+                                        ColorPickerType.both: false,
+                                      },
+                                      // 设置自定义颜色
+                                      customColorSwatchesAndNames: customColors,
+                                      // 显示颜色名称
+                                      showColorName: false,
+                                      // 显示颜色代码
+                                      showColorCode: false,
+                                      // 标题和子标题
+                                      heading: Card(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondaryContainer,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            24,
                                           ),
-                                          subheading: Card(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.tertiaryContainer,
-                                            shadowColor: Colors.transparent,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(24),
-                                            ),
-                                            child: Container(
-                                              width: 140,
-                                              height: 48,
-                                              child: Padding(
-                                                padding: EdgeInsets.all(8),
-                                                child: Center(
-                                                  child: Text(
-                                                    'Brightness',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
+                                        ),
+                                        child: Container(
+                                          width: 140,
+                                          height: 48,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Center(
+                                              child: Text(
+                                                'Pick Colors',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
+                                      subheading: Card(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiaryContainer,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            24,
+                                          ),
+                                        ),
+                                        child: Container(
+                                          width: 140,
+                                          height: 48,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Center(
+                                              child: Text(
+                                                'Brightness',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
 
-                                      /*Card(
+                                  /*Card(
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.primaryContainer,
@@ -529,29 +633,28 @@ class _SettingsPageState extends State<SettingsPage> {
                                         ),
                                       ),
                                     ),*/
-                                      /*FilledButton(
+                                  /*FilledButton(
                                       onPressed: () {},
                                       child: Text("OK"),
                                     ),
 
                                     OutlinedButton(onPressed: (){}, child: Text("Cancel"))*/
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Card(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primaryContainer,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(24),
-                                                topRight: Radius.circular(8),
-                                                bottomLeft: Radius.circular(24),
-                                                bottomRight: Radius.circular(8),
-                                              ),
-                                            ),
-                                            /*ListTile(
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Card(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(24),
+                                            topRight: Radius.circular(8),
+                                            bottomLeft: Radius.circular(24),
+                                            bottomRight: Radius.circular(8),
+                                          ),
+                                        ),
+                                        /*ListTile(
                                               shape: RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.only(
                                                   topLeft: Radius.circular(24),
@@ -570,66 +673,99 @@ class _SettingsPageState extends State<SettingsPage> {
                                                 
                                               },
                                             ),*/
-                                            child: TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.close),
-                                                  SizedBox(width: 2),
-                                                  Text("Cancel"),
-                                                ],
-                                              ),
-                                            ),
+                                        child: TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.close),
+                                              SizedBox(width: 2),
+                                              Text("Cancel"),
+                                            ],
                                           ),
-                                          Card(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(8),
-                                                topRight: Radius.circular(24),
-                                                bottomLeft: Radius.circular(8),
-                                                bottomRight: Radius.circular(
-                                                  24,
+                                        ),
+                                      ),
+                                      Card(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(8),
+                                            topRight: Radius.circular(24),
+                                            bottomLeft: Radius.circular(8),
+                                            bottomRight: Radius.circular(24),
+                                          ),
+                                        ),
+
+                                        child: TextButton(
+                                          //focusNode: FocusNode(),
+                                          onPressed: () {
+                                            try {
+                                              String _selectedColorString = "FF${selectedColor.hex}";
+                                              print(_selectedColorString);
+                                              int _selectedColorInt = 0;
+                                              Map<String, int> _woShiGeShaBi = {
+                                                "0": 0,
+                                                "1": 1,
+                                                "2": 2,
+                                                "3": 3,
+                                                "4": 4,
+                                                "5": 5,
+                                                "6": 6,
+                                                "7": 7,
+                                                "8": 8,
+                                                "9": 9,
+                                                "A": 10,
+                                                "B": 11,
+                                                "C": 12,
+                                                "D": 13,
+                                                "E": 14,
+                                                "F": 15
+                                              };
+                                              for(int i = 0; i < _selectedColorString.length; i++){
+                                                int _sixteenSquare = 1;
+                                                for(int j = 0; j < i; j++){
+                                                  _sixteenSquare = _sixteenSquare * 16;
+                                                }
+                                                _selectedColorInt += _woShiGeShaBi[_selectedColorString[_selectedColorString.length - i - 1]]! * _sixteenSquare;
+                                                
+                                              }
+                                              settingMap["app-seed-color"] = _selectedColorInt;
+                                              File('C:/Users/Public/note_files/settings.json',).writeAsStringSync(jsonEncode(settingMap),);
+                                            } catch (e) {
+                                              print(e);
+                                            }
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.adb,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onPrimary,
+                                              ),
+                                              SizedBox(width: 2),
+                                              Text(
+                                                "Apply ",
+                                                style: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
                                                 ),
                                               ),
-                                            ),
-
-                                            child: TextButton(
-                                              //focusNode: FocusNode(),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.adb,
-                                                    color: Theme.of(
-                                                      context,
-                                                    ).colorScheme.onPrimary,
-                                                  ),
-                                                  SizedBox(width: 2),
-                                                  Text(
-                                                    "Apply ",
-                                                    style: TextStyle(
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.onPrimary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
+                                ],
+                              ),
+                            );
+                          },
                         );
                       },
                       animationType: DialogTransitionType.slideFromTopFade,
@@ -637,6 +773,119 @@ class _SettingsPageState extends State<SettingsPage> {
                       duration: Duration(milliseconds: 500),
                     );
                   },
+                ),
+              ),
+
+              Card(
+                margin: EdgeInsets.all(2),
+
+                shadowColor: Colors.transparent,
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(4),
+                    bottomLeft: Radius.circular(4),
+                    bottomRight: Radius.circular(4),
+                  ),
+                ),
+                child: SwitchListTile(
+                  thumbIcon: thumbIcon,
+                  value: isDarkMode,
+                  onChanged: (value) {
+                    setState(() {
+                      isDarkMode = value;
+                    });
+
+                    try {
+                      settingMap["app-dark-theme"] = isDarkMode;
+                      File(
+                        'C:/Users/Public/note_files/settings.json',
+                      ).writeAsStringSync(jsonEncode(settingMap));
+                    } catch (e) {
+                      print(e);
+                    }
+
+                    showAnimatedDialog(
+                      animationType: DialogTransitionType.slideFromTopFade,
+                      curve: Curves.fastEaseInToSlowEaseOut,
+                      duration: Duration(milliseconds: 500),
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text("Restart the app to apply this."),
+                          content: IntrinsicHeight(
+                            child: Center(
+                              child: Icon(Icons.restart_alt, size: 128),
+                            ),
+                          ),
+                          actions: [
+                            ListTile(
+                              minTileHeight: 64,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(24),
+                                  topRight: Radius.circular(24),
+                                  bottomLeft: Radius.circular(4),
+                                  bottomRight: Radius.circular(4),
+                                ),
+                              ),
+                              title: Center(
+                                child: Text(
+                                  "Got it",
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                              tileColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              onTap: () => Navigator.of(context).pop(),
+                            ),
+                            SizedBox(height: 4),
+                            ListTile(
+                              minTileHeight: 64,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(4),
+                                  topRight: Radius.circular(4),
+                                  bottomLeft: Radius.circular(24),
+                                  bottomRight: Radius.circular(24),
+                                ),
+                              ),
+                              title: Center(
+                                child: Text(
+                                  "Send Feedback",
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                              tileColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              onTap: () {},
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                      bottomLeft: Radius.circular(4),
+                      bottomRight: Radius.circular(4),
+                    ),
+                  ),
+                  title: Text("Dark theme"),
+                  subtitle: Text("Day night mode switch."),
                 ),
               ),
             ],

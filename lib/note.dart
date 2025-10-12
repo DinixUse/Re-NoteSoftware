@@ -147,19 +147,98 @@ class _NotePageState extends State<NotePage> {
         );
         break;
       case 'about':
-        showAboutDialog(
+        showAnimatedDialog(
+          animationType: DialogTransitionType.slideFromTopFade,
+          curve: Curves.fastEaseInToSlowEaseOut,
+          duration: Duration(milliseconds: 500),
           context: context,
-          applicationIcon: ClipRRect(
-            borderRadius: BorderRadius.circular(24.0),
-            child: Image.asset(
-              'assets/icon/ecnu.jpg',
-              width: 128.0,
-              height: 128.0,
-            ),
-          ),
-          applicationVersion: '9.8.5',
-          applicationName: 'Re: Note',
-          applicationLegalese: '@2025 Dinix_NeverOSC, all rights reserved.',
+          builder: (context) {
+            return AboutDialog(
+              applicationIcon: ClipRRect(
+                borderRadius: BorderRadius.circular(24.0),
+                child: Image.asset(
+                  'assets/icon/ecnu.jpg',
+                  width: 128.0,
+                  height: 128.0,
+                ),
+              ),
+              applicationVersion: '9.8.5',
+              applicationName: 'Re: Note',
+              applicationLegalese: '@2025 Dinix_NeverOSC, all rights reserved.',
+              children: [
+                SizedBox(height: 24),
+                ListTile(
+                  minTileHeight: 64,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                      bottomLeft: Radius.circular(4),
+                      bottomRight: Radius.circular(4),
+                    ),
+                  ),
+                  tileColor: Theme.of(context).colorScheme.primaryContainer,
+                  title: Center(
+                    child: Text(
+                      "Visit website",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                SizedBox(height: 4),
+
+                ListTile(
+                  minTileHeight: 64,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                      bottomLeft: Radius.circular(4),
+                      bottomRight: Radius.circular(4),
+                    ),
+                  ),
+                  tileColor: Theme.of(context).colorScheme.primaryContainer,
+                  title: Center(
+                    child: Text(
+                      "Dinix_NeverOSC on Bilibili",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+
+                SizedBox(height: 4),
+                ListTile(
+                  minTileHeight: 64,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  tileColor: Theme.of(context).colorScheme.primaryContainer,
+                  title: Center(
+                    child: Text(
+                      "Send feedback",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                SizedBox(height: 24),
+                Divider(thickness: 2, radius: BorderRadius.circular(4)),
+              ],
+            );
+          },
         );
         break;
     }
@@ -262,18 +341,36 @@ class _NotePageState extends State<NotePage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('筆記', style: TextStyle(fontFamily: "微软雅黑")),
-        backgroundColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        actions: [
-          PopupMenuButton<String>(
+        leading: Card(
+          shape: CircleBorder(),
+          color: Theme.of(context).colorScheme.primaryContainer,
+          child: PopupMenuButton<String>(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(24.0)),
             ),
             onSelected: _handleMenuItemSelected,
             itemBuilder: (BuildContext context) => _menuItems,
           ),
-        ],
+        ),
+        title: Card(
+          color: Theme.of(context).colorScheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: IntrinsicWidth(
+            child: ListTile(
+              title: Text(
+                "筆記",
+                style: TextStyle(
+                  fontFamily: "微软雅黑",
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
       ),
 
       body: ListView.builder(
@@ -302,7 +399,7 @@ class _NotePageState extends State<NotePage> {
                           width: 4,
                           color: Theme.of(context).colorScheme.primary,
                         )
-                      : BorderSide.none
+                      : BorderSide.none,
                 ),
                 child: Padding(
                   padding: EdgeInsets.all(12.0),
@@ -906,7 +1003,6 @@ class _NotePageState extends State<NotePage> {
                               minHeight: 48,
                             ),
                           ),
-                          
                         ],
                       );
                     },
@@ -929,7 +1025,8 @@ class _NotePageState extends State<NotePage> {
 
                       _originMap['content${_originMap['itemCount']}'] =
                           imgFile.path;
-                      _originMap['title${_originMap['itemCount']}'] = imgFile.path;
+                      _originMap['title${_originMap['itemCount']}'] =
+                          imgFile.path;
                       _originMap['state${_originMap['itemCount']}'] = "image";
 
                       await _writeFile.writeAsString(
